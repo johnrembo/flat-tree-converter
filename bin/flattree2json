@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__.'/../vendor/autoload.php';
+
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\SingleCommandApplication;
+
+$application = new SingleCommandApplication();
+
+$application
+    ->setName('PHP Flat tree to JSON converter')
+    ->setVersion('1.0.0')
+    ->addArgument('input', InputArgument::REQUIRED, 'Input flat tree CSV file path')
+    ->addArgument('output', InputArgument::REQUIRED, 'Output JSON file path')
+    ->run();

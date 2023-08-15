@@ -1,0 +1,23 @@
+{
+    "name": "rembo/flat-tree-converter",
+    "description": "PHP Flat tree to JSON converter contender task",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "autoload": {
+        "psr-4": {
+            "Rembo\\FlatTreeConverter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "rembo",
+            "email": "semenov.v@gmail.com"
+        }
+    ],
+    "require": {
+        "symfony/console": "^6.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.3"
+    }
+}
