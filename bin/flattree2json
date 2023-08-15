@@ -4,13 +4,30 @@
 require __DIR__.'/../vendor/autoload.php';
 
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\SingleCommandApplication;
+use Rembo\FlatTreeConverter\Tree;
 
-$application = new SingleCommandApplication();
-
-$application
+(new SingleCommandApplication())
     ->setName('PHP Flat tree to JSON converter')
     ->setVersion('1.0.0')
     ->addArgument('input', InputArgument::REQUIRED, 'Input flat tree CSV file path')
     ->addArgument('output', InputArgument::REQUIRED, 'Output JSON file path')
+    ->setCode(function (InputInterface $input, OutputInterface $output): int {
+        $file = fopen($input->getArgument('input'), 'r');
+        if (!$file || (($line = fgets($file)) === false)
+            || (trim($line) != '"Item Name";"Type";"Parent";"Relation"')) {
+            $output->writeln("Bad format: {$line}");
+            return 1;
+        }
+        $forest = [];
+        while (($fields = fgetcsv($file, null, ';')) !== false) {
+            if ($fields[2] == '') {
+                $forest[] = new Tree($fields[0], $fields[1]);
+            }
+        }
+        $output->writeln(json_encode($forest));
+        return 0;
+    })
     ->run();
