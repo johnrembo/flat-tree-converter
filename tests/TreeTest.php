@@ -26,7 +26,7 @@ class TreeTest extends TestCase
         $level1->addChild($level2);
         $level2->addChild($level3);
 
-        assertEquals($level3, $tree->getChild('3'));
+        assertEquals($level3, $level1->getChild('3'));
     }
 
     /**
