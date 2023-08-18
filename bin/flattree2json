@@ -27,30 +27,31 @@ use Rembo\FlatTreeConverter\Tree;
             return 1;
         }
         $parentIndex = [];
-        $root = new Tree('root', 'root');
+        $root = new Tree();
         while ((list($itemName, $type, $parent, $relation) = fgetcsv($file, null, ';')) !== false) {
-            if (empty($relation)) {
-                $relation = $itemName;
+            if (!array_key_exists($itemName, $parentIndex)) {
+                $parentIndex[$itemName] = new Tree($itemName);
             }
-            $child = new Tree($itemName, $relation);
-            if ($type != TYPE_COMPONENT) {
-                $parentIndex[$relation] = $child;
-            }
+
             if (empty($parent)) {
-                $root->addChild($child);
-            } elseif ($type == TYPE_PRODUCT) {
-                $parentIndex[$parent]->addChild($child);
-            } elseif ($type == TYPE_VARIANT) {
-                $parentIndex[$parent]->addChild($child);
-            } elseif ($type == TYPE_COMPONENT) {
-                $parentIndex[$parent]->addChild($child);
+                $root->addChild($parentIndex[$itemName]);
             } else {
-                $output->writeln('Invalid input');
-                return 1;
+                if (!array_key_exists($parent, $parentIndex)) {
+                    $parentIndex[$parent] = new Tree($parent);
+                }
+                $parentIndex[$parent]->addChild($parentIndex[$itemName]);
+            }
+
+            if ($type == TYPE_COMPONENT) {
+                if (!array_key_exists($relation, $parentIndex)) {
+                    $parentIndex[$relation] = new Tree($relation);
+                }
+                $parentIndex[$itemName]->setRelation($parentIndex[$relation]);
             }
         }
         fclose($file);
-        $output->writeln($root->childrenToJson());
+        $output->write(rtrim($root->childrenToJson(), PHP_EOL));
         return 0;
     })
+
     ->run();

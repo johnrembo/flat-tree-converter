@@ -2,32 +2,29 @@
 
 namespace Rembo\FlatTreeConverter;
 
-use Exception;
-
 class Tree
 {
     public const INDENT  = '  ';
-    private string $relation;
-    private string $parent;
     private string $itemName;
+    private ?Tree $parent;
+    private ?Tree $relation = null;
     private array $children = [];
 
     /**
      * Construct empty tree with specified name
      *
-     * @param string $relation Unique tree identifier name
+     * @param string $itemName Unique tree identifier name
      */
-    public function __construct(string $itemName, string $relation)
+    public function __construct(string $itemName = '')
     {
         $this->itemName = $itemName;
-        $this->relation = $relation;
     }
 
     /**
      *
      * Get tree name.
      *
-     * @return string $relation given at construction
+     * @return string Tree unique name
      */
     public function getItemName(): string
     {
@@ -36,14 +33,17 @@ class Tree
 
     /**
      *
-     * Get relation identifier.
+     * Set tree name.
      *
-     * @return string $relation given at construction
+     * @param string $itemName a new name
+     *
+     * @return void
      */
-    public function getRelation(): string
+    public function setItemName(string $itemName): void
     {
-        return $this->relation;
+        $this->itemName = $itemName;
     }
+
 
     /**
      *
@@ -55,7 +55,7 @@ class Tree
      */
     public function setParent(Tree $tree): void
     {
-        $this->parent = $tree->getRelation();
+        $this->parent = $tree;
     }
 
     /**
@@ -66,13 +66,13 @@ class Tree
      *
      * @return Tree first match or {@code null} when not found
      */
-    public function getChild(string $relation): ?Tree
+    public function getChild(string $itemName): ?Tree
     {
-        if (array_key_exists($relation, $this->children)) {
-            return $this->children[$relation];
+        if (array_key_exists($itemName, $this->children)) {
+            return $this->children[$itemName];
         }
         foreach ($this->children as $child) {
-            $result = $child->getChild($relation);
+            $result = $child->getChild($itemName);
             if ($result !== null) {
                 return $result;
             }
@@ -84,13 +84,47 @@ class Tree
      * Add a child tree.
      *
      * @param Tree $child A {@link Tree} object to be added
-     *
-     * @throws Exception when duplicate name found
      */
     public function addChild(Tree $tree): void
     {
         $tree->setParent($this);
-        $this->children[$tree->getRelation()] = $tree;
+        $this->children[$tree->getItemName()] = $tree;
+    }
+
+    /**
+     * Get all current tree children as array.
+     *
+     * @param string $relation Searched child tree name
+     *
+     * @return array of {@link Tree} objects
+     */
+    public function getChildren(): array
+    {
+        return $this->children;
+    }
+
+    /**
+     * Add an array of children
+     *
+     * @param array $children Array of {@link Tree} object to be added
+     *
+     * @return void
+     */
+    public function addChildren(array $children): void
+    {
+        $this->children = array_merge($this->children, $children);
+    }
+
+    /**
+     * Add related tree
+     *
+     * @param Tree $tree {@link Tree} object to be related
+     *
+     * @return void
+     */
+    public function setRelation(Tree $tree): void
+    {
+        $this->relation = $tree;
     }
 
     /**
@@ -100,12 +134,17 @@ class Tree
      */
     public function childrenToJson(string $ind = self::INDENT): string|false
     {
-        if (empty($this->children)) {
+        if (empty($this->children) && (($this->relation == null) || empty($this->relation->getChildren()))) {
             $fields = '[]' . PHP_EOL;
         } else {
-            $fields = '[';
+            $fields = '[' . PHP_EOL;
             foreach ($this->children as $child) {
                 $fields .= $child->toJson($ind) . ',' . PHP_EOL;
+            }
+            if ($this->relation != null) {
+                foreach ($this->relation->getChildren() as $relatedChild) {
+                    $fields .= $relatedChild->toJson($ind, $this->getItemName()) . ',' . PHP_EOL;
+                }
             }
             $fields = rtrim($fields, ',' . PHP_EOL) . PHP_EOL;
             $fields .= substr($ind, 0, -strlen(self::INDENT)).  ']' . PHP_EOL;
@@ -113,17 +152,27 @@ class Tree
         return $fields;
     }
     /**
-     * Get a printable JSON string on selected fields with formatting
+     * Get a printable JSON string on selected fields with formatting.
+     *
+     * @param string $ind Indentation cruch. Not for modification
+     * @param string $parentName A parent print cruch. Prints sudstituted parent name
      *
      * @return string|false return json string or false when failed
      */
-    public function toJson(string $ind = self::INDENT): string|false
+    public function toJson(string $ind = self::INDENT, string $parentName = null): string|false
     {
+        if (($parentName == null) && ($this->parent !== null)) {
+            $parentName = $this->parent->getItemName();
+        }
         $fields = $ind . '{' . PHP_EOL .
             $ind . self::INDENT . '"itemName": "' . addslashes($this->itemName) . '",' . PHP_EOL .
-            $ind . self::INDENT . '"parent": ' . (empty($this->parent) ? 'null' : addslashes($this->parent)) .
-                '", ' . PHP_EOL.
-            $ind . self::INDENT . '"children": ' . $this->childrenToJson($ind . self::INDENT . self::INDENT) . $ind . '}';
+            $ind . self::INDENT . '"parent": ' .
+                ((($this->parent == null) || ($parentName == ''))
+                    ? 'null'
+                    : '"' . addslashes($parentName) . '"') . ',' . PHP_EOL .
+            $ind . self::INDENT . '"children": ' .
+                $this->childrenToJson($ind . self::INDENT . self::INDENT) .
+            $ind . '}';
         return $fields;
     }
 }
