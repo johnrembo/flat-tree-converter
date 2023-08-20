@@ -2,6 +2,9 @@
 
 namespace Rembo\FlatTreeConverter;
 
+/**
+ * Base tree class. Holds one to many relation structure
+ */
 class Tree
 {
     public const INDENT  = '  ';
@@ -104,19 +107,7 @@ class Tree
     }
 
     /**
-     * Add an array of children
-     *
-     * @param array $children Array of {@link Tree} object to be added
-     *
-     * @return void
-     */
-    public function addChildren(array $children): void
-    {
-        $this->children = array_merge($this->children, $children);
-    }
-
-    /**
-     * Add related tree
+     * Attach related tree.
      *
      * @param Tree $tree {@link Tree} object to be related
      *
@@ -128,7 +119,9 @@ class Tree
     }
 
     /**
-     * Get a printable JSON array of children
+     * Get a printable JSON array of children instead of {`json_encode()`}.
+     *
+     * @param string $ind Indentation crutch. Not for modification
      *
      * @return string|false return json string or false when failed
      */
@@ -152,10 +145,10 @@ class Tree
         return $fields;
     }
     /**
-     * Get a printable JSON string on selected fields with formatting.
+     * Get a formatter printable JSON string on selected fields with formatting.
      *
-     * @param string $ind Indentation cruch. Not for modification
-     * @param string $parentName A parent print cruch. Prints sudstituted parent name
+     * @param string $ind Indentation crutch. Not for modification
+     * @param string $parentName A parent print crutch. Prints sudstituted parent name
      *
      * @return string|false return json string or false when failed
      */

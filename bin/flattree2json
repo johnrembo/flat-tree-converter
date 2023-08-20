@@ -2,9 +2,6 @@
 <?php
 
 define('FIRST_LINE', '"Item Name";"Type";"Parent";"Relation"');
-define('TYPE_PRODUCT', 'Изделия и компоненты');
-define('TYPE_VARIANT', 'Варианты комплектации');
-define('TYPE_COMPONENT', 'Прямые компоненты');
 
 require __DIR__.'/../vendor/autoload.php';
 
@@ -12,7 +9,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\SingleCommandApplication;
-use Rembo\FlatTreeConverter\Tree;
+use Rembo\FlatTreeConverter\TreeBuilder;
+use Rembo\FlatTreeConverter\RecordFactory;
 
 (new SingleCommandApplication())
     ->setName('PHP Flat tree to JSON converter')
@@ -21,37 +19,21 @@ use Rembo\FlatTreeConverter\Tree;
     ->addArgument('output', InputArgument::REQUIRED, 'Output JSON file path')
     ->setCode(function (InputInterface $input, OutputInterface $output): int {
         $file = fopen($input->getArgument('input'), 'r');
-        if (!$file || (($line = fgets($file)) === false)
-            || (trim($line) != FIRST_LINE)) {
-            $output->writeln('Invalid input');
+        if (!$file || (($line = fgets($file)) === false) || (trim($line) != FIRST_LINE)) {
             return 1;
         }
-        $parentIndex = [];
-        $root = new Tree();
+        $treeBuilder = new TreeBuilder();
         while ((list($itemName, $type, $parent, $relation) = fgetcsv($file, null, ';')) !== false) {
-            if (!array_key_exists($itemName, $parentIndex)) {
-                $parentIndex[$itemName] = new Tree($itemName);
-            }
-
-            if (empty($parent)) {
-                $root->addChild($parentIndex[$itemName]);
-            } else {
-                if (!array_key_exists($parent, $parentIndex)) {
-                    $parentIndex[$parent] = new Tree($parent);
-                }
-                $parentIndex[$parent]->addChild($parentIndex[$itemName]);
-            }
-
-            if ($type == TYPE_COMPONENT) {
-                if (!array_key_exists($relation, $parentIndex)) {
-                    $parentIndex[$relation] = new Tree($relation);
-                }
-                $parentIndex[$itemName]->setRelation($parentIndex[$relation]);
-            }
+            $record = RecordFactory::createFromParams($itemName, $type, $parent, $relation);
+            $treeBuilder->populate($record);
         }
         fclose($file);
-        $output->write(rtrim($root->childrenToJson(), PHP_EOL));
+        if (file_put_contents(
+            $input->getArgument('output'),
+            rtrim($treeBuilder->getRoot()->childrenToJson(), PHP_EOL)
+        ) === false) {
+            return 1;
+        }
         return 0;
     })
-
     ->run();
