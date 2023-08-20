@@ -3,11 +3,12 @@
 namespace Rembo\FlatTreeConverter;
 
 /**
- * Default implemetation populates a new tree object into {@link TreeBuilder}
+ * Default implemetation with {@link TreePopulator}.
+ * Populator adds a new tree object into {@link TreeBuilder}
  * tree structure. When parent does not exist creates and adds empty {@link Tree}
  * into index. When parent is not specified adds new child in root tree.
  */
-abstract class AbstractRecord implements Record
+abstract class AbstractRecord implements Record, TreePopulator
 {
     private string $itemName;
     private string $parent;

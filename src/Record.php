@@ -8,22 +8,24 @@ namespace Rembo\FlatTreeConverter;
 interface Record
 {
     /**
-     * @return string Item id name
+     *
+     * Unique name
+     *
+     * @return string Item id
      */
     public function getItemName(): string;
 
     /**
+     * Parent element name
+     *
      * @return string Parent id
      */
     public function getParent(): string;
 
     /**
+     * Element type
+     *
      * @return RecordType Type of record
      */
     public function getType(): RecordType;
-
-    /**
-     * Populate a new tree into {@link TreeBuilder}
-     */
-    public function populate(TreeBuilder $builder): void;
 }

@@ -52,9 +52,9 @@ class TreeBuilder
     }
 
     /**
-     * Adapter method for {@link Record#populate} contract
+     * Command method for {@link TreePopulator} contract
      */
-    public function populate(Record $record): void
+    public function populate(AbstractRecord $record): void
     {
         $record->populate($this);
     }
